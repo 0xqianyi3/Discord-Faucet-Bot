@@ -138,7 +138,7 @@ def main():
         max_interval=21688   # 6小时
     )
     
-    channel_id = "1236263634091380841"  # Discord频道ID
+    channel_id = "1037811694564560966"  # Discord频道ID
     
     # 开始发送消息
     sender.chat(channel_id)
