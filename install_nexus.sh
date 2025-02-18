@@ -1,11 +1,10 @@
 #!/bin/bash
 
-# 设置 web prover id
-PROVER_ID="OtMVKfVMx2h3ti8lT04MR1ADU6q1"
-
-# 安装依赖项
+# 更新和升级系统
 sudo apt update && sudo apt upgrade -y
-sudo apt install build-essential pkg-config libssl-dev git-all protobuf-compiler -y
+
+# 安装必要的依赖项
+sudo apt install build-essential pkg-config libssl-dev git-all cargo -y
 
 # 安装 Nexus Network CLI
 curl https://cli.nexus.xyz/ | sh
@@ -14,14 +13,19 @@ curl https://cli.nexus.xyz/ | sh
 cargo install cargo-nexus
 
 # 设置 prover id
+PROVER_ID="OtMVKfVMx2h3ti8lT04MR1ADU6q1"
 mkdir -p $HOME/.nexus
 echo "$PROVER_ID" > $HOME/.nexus/prover-id
 
-# 清理旧的 screen 会话
-screen -S nexus_cli_session -X quit
+# 更改所有权并构建 Nexus 网络客户端
+sudo chown -R $USER:$USER /root/.nexus/network-api/clients/cli/Cargo.lock
+cd /root/.nexus/network-api/clients/cli
+RUSTFLAGS="-Znext-lockfile-bump" cargo build
 
-# 启动一个新的 screen 会话并运行 CLI 工具
-screen -dmS nexus_cli_session bash -c "cargo nexus --release -- beta.orchestrator.nexus.xyz; exec bash"
+# 更新 Cargo.lock 文件
+sed -i '1c\version = 3' /root/.nexus/network-api/clients/cli/Cargo.lock
+rm Cargo.lock
+cargo generate-lockfile
 
 # 显示提示信息
-echo "Nexus Network CLI 已安装并在新的 screen 会话中运行。使用 'screen -r nexus_cli_session' 查看运行情况。"
+echo "Nexus Network CLI 已安装并构建完成。"
