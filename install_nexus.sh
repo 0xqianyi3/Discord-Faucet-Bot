@@ -27,5 +27,11 @@ sed -i '1c\version = 3' /root/.nexus/network-api/clients/cli/Cargo.lock
 rm Cargo.lock
 cargo generate-lockfile
 
+# 启动新的 screen 会话并运行 Nexus Network CLI
+screen -dmS nexus_cli_session bash -c "cargo nexus --release -- beta.orchestrator.nexus.xyz > $HOME/nexus_cli.log 2>&1"
+
 # 显示提示信息
-echo "Nexus Network CLI 已安装并构建完成。"
+echo "Nexus Network CLI 已安装并在新的 screen 会话中启动。"
+echo "使用以下命令重新连接到会话："
+echo "screen -r nexus_cli_session"
+echo "日志文件位于 $HOME/nexus_cli.log。"
