@@ -10,9 +10,15 @@ sudo apt install build-essential pkg-config libssl-dev git-all protobuf-compiler
 # 安装 Nexus Network CLI
 curl https://cli.nexus.xyz/ | sh
 
+# 安装 cargo-nexus
+cargo install cargo-nexus
+
 # 设置 prover id
 mkdir -p $HOME/.nexus
 echo "$PROVER_ID" > $HOME/.nexus/prover-id
+
+# 清理旧的 screen 会话
+screen -S nexus_cli_session -X quit
 
 # 启动一个新的 screen 会话并运行 CLI 工具
 screen -dmS nexus_cli_session bash -c "cargo nexus --release -- beta.orchestrator.nexus.xyz; exec bash"
