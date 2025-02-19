@@ -1,40 +1,50 @@
 #!/bin/bash
 
-# 启动新的 screen 会话并运行安装脚本
-screen -dmS nexus_install_session bash -c "
-    # 更新和升级系统
-    sudo apt update && sudo apt upgrade -y
+# 第一步: 安装依赖项
+echo "正在安装依赖项..."
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y curl git build-essential pkg-config libssl-dev unzip
 
-    # 安装必要的依赖项
-    sudo apt install build-essential pkg-config libssl-dev git-all cargo -y
+# 第二步: 安装 Cargo 和 Rust
+echo "正在安装 Cargo 和 Rust..."
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source $HOME/.cargo/env
 
-    # 安装 Nexus Network CLI
-    curl https://cli.nexus.xyz/ | sh
+# 第三步: 检查版本
+echo "检查版本..."
+rustc --version
+cargo --version
+rustup update
 
-    # 安装 cargo-nexus
-    cargo install cargo-nexus
+# 第四步: 安装 Protobuf
+echo "正在安装 Protobuf..."
+wget https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-linux-x86_64.zip
+unzip protoc-21.12-linux-x86_64.zip -d $HOME/.local
+export PATH="$HOME/.local/bin:$PATH"
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
 
-    # 设置 prover id
-    PROVER_ID='OtMVKfVMx2h3ti8lT04MR1ADU6q1'
-    mkdir -p \$HOME/.nexus
-    echo '\$PROVER_ID' > \$HOME/.nexus/prover-id
+# 安装额外的组件
+echo "安装额外的组件..."
+cargo install protobuf-codegen
+rustup target add riscv32i-unknown-none-elf
+rustup component add rust-src
 
-    # 更改所有权并构建 Nexus 网络客户端
-    sudo chown -R \$USER:\$USER /root/.nexus/network-api/clients/cli/Cargo.lock
-    cd /root/.nexus/network-api/clients/cli
-    RUSTFLAGS='-Znext-lockfile-bump' cargo build
+# 第五步: 安装 Nexus
+echo "正在安装 Nexus..."
+mkdir -p $HOME/.nexus
+cd $HOME/.nexus
+git clone https://github.com/nexus-xyz/network-api
+cd network-api
 
-    # 更新 Cargo.lock 文件
-    sed -i '1c\\version = 3' /root/.nexus/network-api/clients/cli/Cargo.lock
-    rm Cargo.lock
-    cargo generate-lockfile
+# 检出新版本
+git fetch --tags
+git checkout $(git rev-list --tags --max-count=1)
 
-    # 启动 Nexus Network CLI
-    cargo nexus --release -- beta.orchestrator.nexus.xyz > \$HOME/nexus_cli.log 2>&1
-"
+# CLI 和构建
+cd clients/cli
+cargo clean
+cargo build --release
 
-# 显示提示信息
-echo "Nexus Network CLI 安装脚本已在新的 screen 会话中启动。"
-echo "使用以下命令重新连接到会话："
-echo "screen -r nexus_install_session"
-echo "安装完成后，日志文件位于 \$HOME/nexus_cli.log。"
+# 完成提示
+echo "Nexus CLI 安装成功。你现在可以手动运行它。"
